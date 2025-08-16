@@ -13,18 +13,15 @@ const Appointment = () => {
   const [slotIndex, setSlotIndex] = useState(0);
   const [slotTime, setSlotTime] = useState("");
 
-  // Fetch doctor info
-  const fetchDocInfo = async (params) => {
-    const docInfo = doctors.find((d) => d._id === docId);
+  // ✅ Fetch doctor info
+  const fetchDocInfo = () => {
+    const doc = doctors.find((d) => d._id === docId);
     setDocInfo(doc || null);
   };
 
-
-  // Generate available slots for 7 days
+  // ✅ Generate available slots for 7 days
   const getAvailableSlots = () => {
-    setDocSlots([]);
-    const today = new Date();
-
+    let today = new Date();
     let allSlots = [];
 
     for (let i = 0; i < 7; i++) {
@@ -35,14 +32,17 @@ const Appointment = () => {
       endTime.setDate(today.getDate() + i);
       endTime.setHours(21, 0, 0, 0);
 
-      if (today.toDateString() === currentDate.toDateString()) {
-        let nextHour = today.getHours();
-        let nextMinute = today.getMinutes() > 30 ? 0 : 30;
-        if (today.getMinutes() > 30) nextHour++;
+      if (today.getDate() === currentDate.getDate()) {
+        // agar today hai to 10AM se ya current time ke baad se start karo
+        let nextHour = currentDate.getHours();
+        let nextMinute = currentDate.getMinutes() > 30 ? 0 : 30;
+        if (currentDate.getMinutes() > 30) nextHour++;
         if (nextHour < 10) nextHour = 10;
-        currentDate.setHours(nextHour, nextMinute, 0, 0);
+        currentDate.setHours(nextHour);
+        currentDate.setMinutes(nextMinute);
       } else {
-        currentDate.setHours(10, 0, 0, 0);
+        currentDate.setHours(10);
+        currentDate.setMinutes(0);
       }
 
       let timeSlots = [];
@@ -68,11 +68,12 @@ const Appointment = () => {
 
   // Run on doctors list or docId change
   useEffect(() => {
-    if (doctors.length) {
-      fetchDocInfo();
-      getAvailableSlots();
-    }
+    fetchDocInfo();
   }, [doctors, docId]);
+
+  useEffect(() => {
+    if (docInfo) getAvailableSlots();
+  }, [docInfo]);
 
   return (
     docInfo && (
@@ -88,7 +89,6 @@ const Appointment = () => {
           </div>
 
           <div className="flex-1 border border-gray-400 rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0">
-            {/* Name, degree, experience */}
             <p className="flex items-center gap-2">
               {docInfo.name}
               <img src={assets.verified_icon} alt="" />
@@ -100,7 +100,6 @@ const Appointment = () => {
               <button>{docInfo.experience}</button>
             </div>
 
-            {/* About */}
             <div>
               <p className="flex items-center gap-1 text-sm font-medium text-gray-900 mt-3">
                 About <img src={assets.info_icon} alt="" />
@@ -141,21 +140,20 @@ const Appointment = () => {
               ))}
           </div>
 
-          {/* Slot times for selected day */}
-          <div className="mt-4 flex gap-3 flex-wrap">
-            {docSlots[slotIndex] &&
-              docSlots[slotIndex].map((slot, i) => (
-                <div
-                  key={i}
-                  onClick={() => setSlotTime(slot.time)}
-                  className={`px-4 py-2 rounded-lg cursor-pointer ${
-                    slotTime === slot.time
+          <div className="flex items-center gap-3 w-full overflow-scroll mt-4">
+            {docSlots.length > 0 &&
+              docSlots[slotIndex]?.map((item, index) => (
+                <p
+                  key={index}
+                  onClick={() => setSlotTime(item.time)}
+                  className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${
+                    item.time === slotTime
                       ? "bg-primary text-white"
-                      : "border border-gray-200"
+                      : "text-gray-400 border border-gray-300"
                   }`}
                 >
-                  {slot.time}
-                </div>
+                  {item.time.toLowerCase()}
+                </p>
               ))}
           </div>
         </div>
