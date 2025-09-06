@@ -27,8 +27,7 @@ const addDoctor = async (req,res) => {
         }   {
             return res.json({ success: false, message: "Please enter a strong password" })
         }
-
-        //hashing password 
+        //hashing passwor
          const salt = await bycrypt.genSalt(10);
          const hashedPassword = await bycrypt.hash(password, salt);
 
